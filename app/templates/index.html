@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroSense</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    h1 { margin-bottom: .2rem; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.2rem; margin-top: 1rem; }
+    .erro { background: #fde8e8; color: #9b1c1c; padding: .8rem; border-radius: 6px; }
+    .aviso { background: #fff7d6; padding: .6rem; border-radius: 6px; margin-top: .6rem; }
+    .tags span { display: inline-block; background: #eef; border-radius: 12px; padding: .15rem .6rem; margin: .15rem; font-size: .9rem; }
+    button { padding: .5rem 1rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>AgroSense</h1>
+  <p>Envie uma foto do solo ou de uma planta da horta para análise.</p>
+
+  <form method="post" action="/analisar" enctype="multipart/form-data">
+    <p>
+      <label><input type="radio" name="modo" value="solo" checked> Umidade do solo (cor)</label>
+      <label><input type="radio" name="modo" value="horta"> Condição da planta (horta)</label>
+    </p>
+    <p><input type="file" name="imagem" accept="image/jpeg,image/png" required></p>
+    <button type="submit">Analisar</button>
+  </form>
+
+  {% if erro %}
+    <div class="card erro">{{ erro }}</div>
+  {% endif %}
+
+  {% if resultado %}
+    <div class="card">
+      <h2>{{ resultado.titulo }}: {{ resultado.resultado }}</h2>
+      <p>{{ resultado.detalhe }}</p>
+      <ul>
+        {% for nome, valor in resultado.metricas.items() %}
+          <li>{{ nome }}: {{ valor }}</li>
+        {% endfor %}
+      </ul>
+
+      {% if resultado.legenda %}
+        <h3>Descrição da imagem (Azure AI Vision)</h3>
+        <p>{{ resultado.legenda }}</p>
+      {% endif %}
+
+      {% if resultado.tags %}
+        <h3>Etiquetas</h3>
+        <div class="tags">{% for t in resultado.tags %}<span>{{ t }}</span>{% endfor %}</div>
+      {% endif %}
+
+      {% if resultado.aviso %}
+        <div class="aviso">{{ resultado.aviso }}</div>
+      {% endif %}
+    </div>
+  {% endif %}
+</body>
+</html>

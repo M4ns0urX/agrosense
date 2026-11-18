@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroSense</title>
+  <style>
+    :root {
+      --verde: #2e7d32;
+      --verde-claro: #e8f5e9;
+      --terra: #6d4c41;
+      --bege: #faf7f2;
+      --texto: #1f2a1f;
+      --cinza: #6b7280;
+      --borda: #e5e1d8;
+      --ok: #2e7d32;
+      --alerta: #b26a00;
+      --ruim: #c62828;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bege);
+      color: var(--texto);
+      line-height: 1.5;
+    }
+    header {
+      background: var(--verde);
+      color: #fff;
+      padding: 1.5rem 1rem;
+      text-align: center;
+    }
+    header h1 { margin: 0; font-size: 1.8rem; letter-spacing: .5px; }
+    header p { margin: .3rem 0 0; opacity: .9; }
+
+    main { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--borda);
+      border-radius: 12px;
+      padding: 1.2rem 1.4rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    }
+    .card h2 { margin: 0 0 .4rem; font-size: 1.15rem; color: var(--terra); }
+
+    .modos { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+    .modo input { position: absolute; opacity: 0; pointer-events: none; }
+    .modo {
+      display: block;
+      border: 2px solid var(--borda);
+      border-radius: 10px;
+      padding: .8rem;
+      cursor: pointer;
+      background: #fff;
+      position: relative;
+    }
+    .modo strong { display: block; margin-bottom: .15rem; }
+    .modo small { color: var(--cinza); }
+    .modo:has(input:checked) { border-color: var(--verde); background: var(--verde-claro); }
+
+    .upload {
+      margin-top: 1rem;
+      border: 2px dashed var(--borda);
+      border-radius: 10px;
+      padding: 1.2rem;
+      text-align: center;
+      color: var(--cinza);
+    }
+    .upload input[type="file"] { margin-top: .4rem; }
+    #preview {
+      display: none;
+      max-width: 100%;
+      max-height: 260px;
+      margin: .8rem auto 0;
+      border-radius: 8px;
+    }
+
+    button.analisar {
+      margin-top: 1rem;
+      width: 100%;
+      padding: .85rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--verde);
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button.analisar:disabled { opacity: .6; cursor: progress; }
+
+    .erro {
+      background: #fdecea;
+      color: var(--ruim);
+      border: 1px solid #f5c6c2;
+    }
+
+    .resultado-topo { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .badge {
+      padding: .25rem .8rem;
+      border-radius: 999px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--cinza);
+      white-space: nowrap;
+    }
+    .badge[data-nivel="alta"], .badge[data-nivel="boa"] { background: var(--ok); }
+    .badge[data-nivel="média"], .badge[data-nivel="atenção"] { background: var(--alerta); }
+    .badge[data-nivel="baixa"], .badge[data-nivel="crítica"] { background: var(--ruim); }
+
+    .detalhe { margin: .6rem 0 .8rem; }
+
+    .metricas { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .metrica {
+      background: var(--bege);
+      border: 1px solid var(--borda);
+      border-radius: 8px;
+      padding: .5rem .8rem;
+      font-size: .9rem;
+    }
+    .metrica b { display: block; font-size: 1.1rem; color: var(--terra); }
+
+    .tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .4rem; }
+    .tags span {
+      background: var(--verde-claro);
+      color: var(--verde);
+      border-radius: 999px;
+      padding: .2rem .7rem;
+      font-size: .88rem;
+    }
+
+    .aviso {
+      background: #fff7e0;
+      border: 1px solid #f3dca0;
+      color: #6b4a00;
+      padding: .7rem .9rem;
+      border-radius: 8px;
+      margin-top: .8rem;
+    }
+    .legenda { font-style: italic; color: var(--texto); }
+
+    footer { text-align: center; color: var(--cinza); font-size: .85rem; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AgroSense</h1>
+    <p>Análise de solo e de plantas da horta a partir de fotos</p>
+  </header>
+
+  <main>
+    <form method="post" action="/analisar" enctype="multipart/form-data" id="form">
+      <div class="card">
+        <h2>1. O que você quer analisar?</h2>
+        <div class="modos">
+          <label class="modo">
+            <input type="radio" name="modo" value="solo" checked>
+            <strong>Umidade do solo</strong>
+            <small>Estimada pela cor do solo terroso</small>
+          </label>
+          <label class="modo">
+            <input type="radio" name="modo" value="horta">
+            <strong>Condição da planta</strong>
+            <small>Estimada pela área verde da imagem</small>
+          </label>
+        </div>
+
+        <h2 style="margin-top:1.2rem">2. Envie a foto</h2>
+        <div class="upload">
+          JPG ou PNG, até 4 MB
+          <br>
+          <input type="file" name="imagem" id="imagem" accept="image/jpeg,image/png" required>
+          <img id="preview" alt="Prévia da imagem enviada">
+        </div>
+
+        <button type="submit" class="analisar" id="botao">Analisar imagem</button>
+      </div>
+    </form>
+
+    {% if erro %}
+      <div class="card erro">{{ erro }}</div>
+    {% endif %}
+
+    {% if resultado %}
+      <section class="card">
+        <div class="resultado-topo">
+          <h2>{{ resultado.titulo }}</h2>
+          <span class="badge" data-nivel="{{ resultado.resultado|lower }}">{{ resultado.resultado }}</span>
+        </div>
+        <p class="detalhe">{{ resultado.detalhe }}</p>
+
+        <div class="metricas">
+          {% for nome, valor in resultado.metricas.items() %}
+            <div class="metrica">{{ nome }}<b>{{ valor }}</b></div>
+          {% endfor %}
+        </div>
+
+        {% if resultado.legenda %}
+          <h2 style="margin-top:1.2rem">Descrição da imagem</h2>
+          <p class="legenda">{{ resultado.legenda }}</p>
+          <small style="color:var(--cinza)">Gerado pelo Azure AI Vision</small>
+        {% endif %}
+
+        {% if resultado.tags %}
+          <h2 style="margin-top:1.2rem">Etiquetas</h2>
+          <div class="tags">
+            {% for t in resultado.tags %}<span>{{ t }}</span>{% endfor %}
+          </div>
+        {% endif %}
+
+        {% if resultado.aviso %}
+          <div class="aviso">{{ resultado.aviso }}</div>
+        {% endif %}
+      </section>
+    {% endif %}
+
+    <footer>AgroSense · Global Solution</footer>
+  </main>
+
+  <script>
+    // Prévia da imagem escolhida
+    const input = document.getElementById("imagem");
+    const preview = document.getElementById("preview");
+    input.addEventListener("change", () => {
+      const arquivo = input.files[0];
+      if (!arquivo) { preview.style.display = "none"; return; }
+      preview.src = URL.createObjectURL(arquivo);
+      preview.style.display = "block";
+    });
+
+    // Feedback enquanto a análise roda
+    document.getElementById("form").addEventListener("submit", () => {
+      const botao = document.getElementById("botao");
+      botao.disabled = true;
+      botao.textContent = "Analisando...";
+    });
+  </script>
+</body>
+</html>
